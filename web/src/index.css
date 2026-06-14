@@ -132,6 +132,7 @@ main { max-width: 980px; margin: 0 auto; padding: 24px 24px 120px; }
 .result.draw .result-title { color: var(--gold); }
 .result-sub { font-size: 16px; color: var(--text); margin-top: 4px; font-weight: 600; }
 .result-scores { font-size: 13px; color: var(--dim); margin-top: 8px; font-variant-numeric: tabular-nums; }
+.result-why { font-size: 13px; color: var(--muted); margin-top: 6px; font-style: italic; }
 
 /* ---- draft ---- */
 h2.bill { font-size: 14px; letter-spacing: 0.25em; text-transform: uppercase; color: var(--muted); margin: 40px 0 16px; text-align: center; }
@@ -170,6 +171,9 @@ h2.bill { font-size: 14px; letter-spacing: 0.25em; text-transform: uppercase; co
 .chip.gold { background: var(--gold); border-color: var(--gold); color: #14110a; font-weight: 700; }
 .chip.stakein { display: flex; gap: 8px; align-items: center; }
 .chip.stakein input { width: 56px; background: transparent; border: 0; color: var(--text); font: inherit; text-align: right; }
+.chip.claim { background: rgba(47,208,106,0.12); border-color: rgba(47,208,106,0.5); color: var(--up); font-weight: 700; }
+.chip.claim:hover { background: rgba(47,208,106,0.2); }
+.chip.claim:disabled { opacity: 0.5; cursor: default; }
 
 .enter {
   display: block; margin: 32px auto 0; width: min(420px, 100%);

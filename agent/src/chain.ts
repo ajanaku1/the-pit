@@ -23,12 +23,22 @@ type WriteArgs = {
 // concurrent timers can't grab the same nonce.
 let txQueue: Promise<unknown> = Promise.resolve();
 
-/** Send a tx with explicit gas (testnet estimation lowballs) and wait for inclusion. */
+// Real gas price on this chain is ~0.01 gwei. viem's auto fee estimation
+// over-reserves maxFeePerGas (gasLimit * inflated maxFee), which trips
+// "exceeds balance" on a low-but-sufficient wallet. Pin explicit, generous-but-
+// tiny fees so the reservation stays small and the tx is still well-priced.
+const MAX_FEE = 2_000_000_000n;          // 2 gwei cap (200x the ~0.01 gwei base)
+const MAX_PRIORITY_FEE = 100_000_000n;   // 0.1 gwei tip
+
+/** Send a tx with explicit gas + fees (testnet estimation misbehaves) and wait for inclusion. */
 export function sendTx(call: WriteArgs): Promise<`0x${string}`> {
   const next = txQueue.then(async () => {
-    const hash = await walletClient.writeContract({ ...call, gas: GAS_LIMIT } as Parameters<
-      typeof walletClient.writeContract
-    >[0]);
+    const hash = await walletClient.writeContract({
+      ...call,
+      gas: GAS_LIMIT,
+      maxFeePerGas: MAX_FEE,
+      maxPriorityFeePerGas: MAX_PRIORITY_FEE,
+    } as Parameters<typeof walletClient.writeContract>[0]);
     const receipt = await publicClient.waitForTransactionReceipt({ hash, timeout: 120_000 });
     if (receipt.status !== "success") throw new Error(`tx reverted: ${hash} (${call.functionName})`);
     return hash;

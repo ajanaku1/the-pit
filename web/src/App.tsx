@@ -246,6 +246,25 @@ export default function App() {
     setDraft({ picks: [], weights: {}, longs: {} });
   }
 
+  // New players start with no USDG; the keeper faucet grants 10 to get going.
+  const KEEPER_URL = "https://the-pit-keeper.onrender.com";
+  async function claimUsdg() {
+    if (!wallet) { setError("Connect your wallet first."); return; }
+    setError(null);
+    setBusy("Claiming 10 USDG…");
+    try {
+      const res = await fetch(`${KEEPER_URL}/claim?to=${wallet}`);
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (data.error) { setError(data.error); return; }
+      setBusy("10 USDG incoming — give it a few seconds…");
+      await new Promise((r) => setTimeout(r, 5000));
+    } catch {
+      setError("Faucet is waking up, try again in a moment.");
+    } finally {
+      setBusy(null);
+    }
+  }
+
   const [clock, setClock] = useState(() => Math.floor(Date.now() / 1000));
   useEffect(() => {
     const id = setInterval(() => setClock(Math.floor(Date.now() / 1000)), 1000);
@@ -293,7 +312,13 @@ export default function App() {
   const youAreCreator = round && wallet ? round.creator.toLowerCase() === wallet.toLowerCase() : true;
   const yourReturn = round ? (youAreCreator ? round.creatorReturn : round.opponentReturn) : 0n;
   const bossReturn = round ? (youAreCreator ? round.opponentReturn : round.creatorReturn) : 0n;
-  const pct = (value: bigint) => (value === 0n ? "—" : `${(Number(value) / 1e16 - 100).toFixed(2)}%`);
+  // Adaptive precision: tiny moves need more decimals so a real margin never
+  // displays as a fake tie (e.g. both "-0.01%" when one book actually lost less).
+  const pct = (value: bigint) => {
+    if (value === 0n) return "—";
+    const p = Number(value) / 1e16 - 100;
+    return `${p.toFixed(Math.abs(p) >= 1 ? 2 : 4)}%`;
+  };
   const secondsLeft = round ? Math.max(0, round.endTime - clock) : 0;
   const mmss = `${Math.floor(secondsLeft / 60)}:${String(secondsLeft % 60).padStart(2, "0")}`;
 
@@ -319,6 +344,21 @@ export default function App() {
     loss: { title: "THE BOSS WINS", sub: `−${stakeUsdg} USDG — run it back` },
     draw: { title: "DEAD HEAT", sub: "stake returned" },
   };
+  // Plain-English reason for the verdict, so a "−0.01% vs −0.01%" loss makes sense.
+  const ONE = 10n ** 18n;
+  const marginPct = Math.abs(Number(yourReturn) - Number(bossReturn)) / 1e16;
+  const whyLine = (() => {
+    if (phase !== "settled" || !round) return "";
+    if (youRevealed && bossRevealed) {
+      if (yourReturn === bossReturn) return "Identical returns to the wire — stake returned.";
+      const rule =
+        yourReturn < ONE && bossReturn < ONE ? "both books closed red, so the smaller loss takes it"
+        : "higher return takes the pot";
+      return `Decided by ${marginPct.toFixed(4)}% — ${rule}.`;
+    }
+    if (!youRevealed) return "You forfeited — your hand never revealed before the bell.";
+    return "The Boss forfeited — it never revealed before the bell.";
+  })();
 
   const tapeRun = (copy: number) => (
     <span key={copy}>
@@ -427,6 +467,7 @@ export default function App() {
                 <div className="result-title">{RESULT[outcome].title}</div>
                 <div className="result-sub">{RESULT[outcome].sub}</div>
                 <div className="result-scores">You {pct(yourReturn)} · Pit Boss {pct(bossReturn)}</div>
+                {whyLine && <div className="result-why">{whyLine}</div>}
               </div>
             )}
             <div className="talkline"><b>PIT BOSS</b>&nbsp; “{bossLine(phase, yourReturn, bossReturn)}”</div>
@@ -512,6 +553,11 @@ export default function App() {
               <label className="chip stakein">
                 Stake <input value={stake} onChange={(event) => setStake(event.target.value)} /> USDG
               </label>
+              {wallet && (
+                <button type="button" className="chip claim" onClick={() => void claimUsdg()} disabled={busy !== null}>
+                  + Claim 10 USDG
+                </button>
+              )}
             </div>
 
             <button
