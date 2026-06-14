@@ -40,27 +40,34 @@ async function fetchRouterPrices(market: Market): Promise<PriceMap> {
   return prices;
 }
 
-/** Live crypto prices. Alchemy Prices API first: a dedicated price service
- *  (not an exchange) so it isn't geo-blocked from US datacenters the way
- *  Binance/KuCoin are, and it covers BTC/ETH/BNB/SOL/XRP. Needs ALCHEMY_API_KEY.
- *  Falls back to CoinGecko, then Binance. 18-decimal USD. */
+/** Pyth Network price-feed IDs (USD). Pyth's Hermes service is a global oracle
+ *  CDN: no API key, and not geo-blocked the way exchange APIs (Binance/KuCoin)
+ *  are from US datacenters. */
+const PYTH_FEEDS: Record<string, string> = {
+  BTC: "e62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43",
+  ETH: "ff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace",
+  BNB: "2f95862b045670cd22bee3114c39763a4a08beeb663b145d283c31d7d1101c4f",
+  SOL: "ef0d8b6fda2ceba41da15d4095d1da392a0d2f8ed0c6c7bc0f4cfac8c280b56d",
+  XRP: "ec5d399846a9209f3fe5881d70aae9268c94339ff9817e8d18ff19fa05eea1c8",
+};
+
+/** Live crypto prices via Pyth Hermes (no key, datacenter-friendly, covers all
+ *  five). Falls back to CoinGecko, then Binance. 18-decimal USD. */
 async function fetchCryptoPrices(market: Market): Promise<PriceMap> {
-  const key = process.env.ALCHEMY_API_KEY;
-  if (!key) return fetchCoingeckoPrices(market);
   try {
-    const query = market.assets.map((a) => `symbols=${a.symbol}`).join("&");
+    const ids = market.assets.map((a) => `ids[]=${PYTH_FEEDS[a.symbol]}`).join("&");
     const res = await fetch(
-      `https://api.g.alchemy.com/prices/v1/${key}/tokens/by-symbol?${query}`,
+      `https://hermes.pyth.network/v2/updates/price/latest?${ids}`,
       { signal: AbortSignal.timeout(12_000) },
     );
-    if (!res.ok) throw new Error(`alchemy ${res.status}`);
-    const body = (await res.json()) as { data: { symbol: string; prices: { currency: string; value: string }[] }[] };
-    const bySymbol = new Map(body.data.map((d) => [d.symbol, d.prices.find((p) => p.currency === "usd")?.value]));
+    if (!res.ok) throw new Error(`pyth ${res.status}`);
+    const body = (await res.json()) as { parsed: { id: string; price: { price: string; expo: number } }[] };
+    const byId = new Map(body.parsed.map((p) => [p.id.toLowerCase(), p.price]));
     const prices: PriceMap = new Map();
     for (const asset of market.assets) {
-      const usd = bySymbol.get(asset.symbol);
-      if (usd === undefined) throw new Error(`alchemy missing ${asset.symbol}`);
-      prices.set(asset.symbol, toWad(Number(usd)));
+      const p = byId.get(PYTH_FEEDS[asset.symbol].toLowerCase());
+      if (!p) throw new Error(`pyth missing ${asset.symbol}`);
+      prices.set(asset.symbol, toWad(Number(p.price) * 10 ** p.expo));
     }
     return prices;
   } catch {
