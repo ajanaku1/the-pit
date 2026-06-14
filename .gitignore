@@ -9,11 +9,16 @@ node_modules/
 # Build artifacts
 dist/
 **/dist/
+video/out/
+video/public/audio/
+*.mp4
+site/
 contracts/out/
 contracts/cache/
 contracts/broadcast/
 
 # Local
+.claude/
 .DS_Store
 *.log
 .vercel

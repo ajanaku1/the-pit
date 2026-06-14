@@ -32,7 +32,8 @@ button:focus-visible, input:focus-visible { outline: 3px solid #fff; outline-off
 
 /* ---- chrome ---- */
 header { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 20px 32px; flex-wrap: wrap; }
-.logo { font-size: 21px; font-weight: 800; font-style: italic; color: var(--text); letter-spacing: -0.02em; }
+.logo { font-size: 21px; font-weight: 800; font-style: italic; color: var(--text); letter-spacing: -0.02em; display: inline-flex; align-items: center; gap: 9px; }
+.logo .logomark { width: 30px; height: 30px; display: block; filter: drop-shadow(0 0 8px rgba(229,72,77,0.35)); }
 .logo em { color: var(--blood); }
 
 /* stocks / crypto mode switch */

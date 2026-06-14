@@ -344,7 +344,7 @@ export default function App() {
       <div className="tape"><div className="tape-inner">{[0, 1].map(tapeRun)}</div></div>
 
       <header>
-        <div className="logo">THE <em>PIT</em></div>
+        <div className="logo"><img src={`${import.meta.env.BASE_URL}logo.svg`} alt="" className="logomark" />THE <em>PIT</em></div>
         <div className="modeswitch">
           {(Object.keys(MARKETS) as Mode[]).map((key) => (
             <button

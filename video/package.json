@@ -1,0 +1,25 @@
+{
+  "name": "the-pit-video",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "studio": "remotion studio src/Root.tsx",
+    "render": "remotion render src/Root.tsx Main out/demo.mp4",
+    "render:social": "remotion render src/Root.tsx Social out/social.mp4",
+    "render:all": "npm run render && npm run render:social",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@remotion/cli": "^4.0.477",
+    "@remotion/google-fonts": "^4.0.477",
+    "@remotion/transitions": "^4.0.477",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
+    "remotion": "^4.0.477"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "typescript": "^6.0.3"
+  }
+}

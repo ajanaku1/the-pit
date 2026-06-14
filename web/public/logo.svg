@@ -1,0 +1,19 @@
+<svg viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="The Pit logo">
+  <defs>
+    <linearGradient id="pitClimb" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0" stop-color="#e5484d"/>
+      <stop offset="0.55" stop-color="#ff6b6b"/>
+      <stop offset="1" stop-color="#34d399"/>
+    </linearGradient>
+  </defs>
+  <!-- the pit: a U-shaped well -->
+  <path d="M40 64 L40 150 Q40 198 96 198 L160 198 Q216 198 216 150 L216 64"
+        fill="none" stroke="#7f1d1d" stroke-width="15" stroke-linecap="round" opacity="0.7"/>
+  <!-- chart climbing out: dips into the pit, breaks out top-right -->
+  <polyline points="62,98 90,152 118,170 150,120 182,150 230,42"
+            fill="none" stroke="url(#pitClimb)" stroke-width="17"
+            stroke-linejoin="round" stroke-linecap="round"/>
+  <!-- breakout arrowhead -->
+  <polyline points="202,42 230,42 230,70" fill="none" stroke="#34d399"
+            stroke-width="17" stroke-linejoin="round" stroke-linecap="round"/>
+</svg>

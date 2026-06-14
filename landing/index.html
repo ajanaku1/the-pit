@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>The Pit: Beat the Machine | PvAI prediction market on Robinhood Chain</title>
+<meta name="description" content="Draft a portfolio, stake USDG, and out-trade an autonomous AI fund manager in a 60-second on-chain duel. Stocks and crypto, long or short. Live on Robinhood Chain." />
+<meta property="og:title" content="The Pit: Beat the Machine" />
+<meta property="og:description" content="A PvAI prediction market where you battle an autonomous AI fund manager, live and on-chain." />
+<meta property="og:image" content="assets/race.png" />
+<meta name="theme-color" content="#0b0708" />
+<link rel="icon" type="image/svg+xml" href="favicon.svg" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,800;1,900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --bg:#0b0708; --bg2:#120b0c; --surface:#160d0f; --hair:rgba(229,72,77,.18);
+    --blood:#e5484d; --blood-bright:#ff6b6b; --blood-dim:#7f1d1d;
+    --green:#34d399; --amber:#f59e0b; --cyan:#22d3ee;
+    --text:#f6efef; --dim:#c6aab0; --muted:#7a5e62;
+    --mono:'JetBrains Mono',ui-monospace,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-serif;line-height:1.5;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+  a{color:inherit;text-decoration:none}
+  .wrap{max-width:1180px;margin:0 auto;padding:0 24px}
+
+  /* atmospheric orbs */
+  .orb{position:fixed;border-radius:50%;filter:blur(120px);z-index:0;pointer-events:none;opacity:.5}
+  .orb.o1{width:520px;height:520px;background:#e5484d;top:-120px;left:-100px}
+  .orb.o2{width:460px;height:460px;background:#7f1d1d;top:40%;right:-160px}
+  .orb.o3{width:380px;height:380px;background:#34d399;bottom:-120px;left:20%;opacity:.18}
+
+  /* ticker tape */
+  .tape{position:relative;z-index:2;border-bottom:1px solid var(--hair);background:rgba(8,5,6,.7);backdrop-filter:blur(8px);overflow:hidden;white-space:nowrap}
+  .tape-inner{display:inline-flex;gap:36px;padding:9px 0;animation:scroll 32s linear infinite;font-family:var(--mono);font-size:12.5px;font-weight:600}
+  .tape-inner span{color:var(--muted)}
+  .tape-inner b{color:var(--text)}
+  .up{color:var(--green)!important}.down{color:var(--blood-bright)!important}
+  @keyframes scroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+
+  /* nav */
+  nav{position:sticky;top:0;z-index:20;backdrop-filter:blur(12px);background:rgba(11,7,8,.72);border-bottom:1px solid var(--hair)}
+  nav .wrap{display:flex;align-items:center;justify-content:space-between;height:64px}
+  .brand{display:flex;align-items:center;gap:10px;font-weight:900;font-style:italic;font-size:22px;letter-spacing:-.02em}
+  .brand img{width:30px;height:30px;filter:drop-shadow(0 0 8px rgba(229,72,77,.4))}
+  .brand em{color:var(--blood);font-style:italic}
+  .navlinks{display:flex;align-items:center;gap:8px}
+  .navlinks a.ghost{color:var(--dim);font-weight:600;font-size:14px;padding:9px 14px;border-radius:10px}
+  .navlinks a.ghost:hover{color:var(--text);background:var(--surface)}
+  .btn{display:inline-flex;align-items:center;gap:8px;font-weight:800;font-size:14px;padding:11px 20px;border-radius:11px;border:1px solid transparent;transition:transform .12s,box-shadow .2s,background .2s}
+  .btn:hover{transform:translateY(-1px)}
+  .btn-primary{background:linear-gradient(135deg,#ff6b6b,#e5484d);color:#fff;box-shadow:0 8px 30px rgba(229,72,77,.35)}
+  .btn-primary:hover{box-shadow:0 10px 40px rgba(229,72,77,.5)}
+  .btn-ghost{background:var(--surface);border-color:var(--hair);color:var(--text)}
+  .btn-tg{background:#229ED9;color:#fff}
+  .btn-lg{font-size:16px;padding:15px 28px;border-radius:13px}
+
+  /* hero */
+  header.hero{position:relative;z-index:2;padding:88px 0 60px;text-align:center}
+  .vs{display:inline-flex;align-items:center;gap:18px;font-weight:900;font-size:20px;letter-spacing:.08em;margin-bottom:22px}
+  .vs .you{color:var(--green)}.vs .mid{color:var(--blood);font-style:italic;font-size:26px;animation:pulse 2.4s ease-in-out infinite}
+  .vs .mach{color:var(--blood-bright)}
+  @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+  h1{font-size:clamp(46px,8.5vw,104px);font-weight:900;font-style:italic;letter-spacing:-.03em;line-height:.95;margin-bottom:22px}
+  h1 .p{background:linear-gradient(135deg,#ff6b6b,#e5484d 55%,#34d399);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .sub{font-size:clamp(17px,2.4vw,22px);color:var(--dim);max-width:680px;margin:0 auto 16px;font-weight:500}
+  .sub b{color:var(--text);font-weight:700}
+  .chainline{font-family:var(--mono);font-size:13px;color:var(--muted);margin-bottom:34px}
+  .chainline .dot{color:var(--green)}
+  .cta-row{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-bottom:46px}
+  .shot{position:relative;max-width:920px;margin:0 auto;border-radius:18px;overflow:hidden;border:1px solid var(--hair);box-shadow:0 30px 90px rgba(0,0,0,.6),0 0 70px rgba(229,72,77,.18)}
+  .shot img{display:block;width:100%}
+  .shot .badge{position:absolute;top:16px;left:16px;font-family:var(--mono);font-size:12px;font-weight:700;color:var(--blood-bright);background:rgba(11,7,8,.8);border:1px solid rgba(229,72,77,.4);padding:7px 13px;border-radius:8px;backdrop-filter:blur(6px)}
+  .shot .badge .live{color:var(--green)}
+
+  /* stat strip */
+  .stats{position:relative;z-index:2;border-block:1px solid var(--hair);background:rgba(18,11,12,.5);margin-top:56px}
+  .stats .wrap{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;padding:30px 24px;text-align:center}
+  .stat .v{font-size:34px;font-weight:900;color:var(--blood-bright);font-style:italic}
+  .stat .v.green{color:var(--green)}
+  .stat .l{font-size:12.5px;color:var(--muted);margin-top:4px;letter-spacing:.02em}
+  @media(max-width:720px){.stats .wrap{grid-template-columns:repeat(2,1fr);gap:24px}}
+
+  /* sections */
+  section{position:relative;z-index:2;padding:84px 0}
+  .eyebrow{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--blood);letter-spacing:.18em;text-transform:uppercase;margin-bottom:14px;text-align:center}
+  h2{font-size:clamp(30px,4.5vw,46px);font-weight:800;text-align:center;letter-spacing:-.02em;margin-bottom:14px}
+  .lead{text-align:center;color:var(--dim);max-width:620px;margin:0 auto 50px;font-size:18px}
+
+  .steps{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
+  .step{background:var(--surface);border:1px solid var(--hair);border-radius:16px;padding:26px 22px;transition:transform .15s,border-color .2s}
+  .step:hover{transform:translateY(-4px);border-color:rgba(229,72,77,.4)}
+  .step .n{width:46px;height:46px;border-radius:12px;display:grid;place-items:center;font-family:var(--mono);font-weight:700;font-size:19px;margin-bottom:16px}
+  .step h3{font-size:20px;font-weight:800;margin-bottom:8px}
+  .step p{font-size:15px;color:var(--dim)}
+  @media(max-width:860px){.steps{grid-template-columns:repeat(2,1fr)}}
+
+  /* play columns */
+  .play{display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start}
+  @media(max-width:860px){.play{grid-template-columns:1fr}}
+  .panel{background:linear-gradient(180deg,rgba(22,13,15,.9),rgba(14,9,10,.9));border:1px solid var(--hair);border-radius:18px;padding:32px 30px}
+  .panel .head{display:flex;align-items:center;gap:12px;margin-bottom:22px}
+  .panel .head .ic{width:42px;height:42px;border-radius:11px;display:grid;place-items:center;font-size:22px}
+  .panel .head h3{font-size:23px;font-weight:800}
+  .panel .head .tag{font-size:12.5px;color:var(--muted);font-family:var(--mono)}
+  ol.play-steps{list-style:none;counter-reset:s}
+  ol.play-steps li{counter-increment:s;position:relative;padding:13px 0 13px 44px;border-bottom:1px dashed rgba(229,72,77,.12);font-size:15.5px;color:var(--dim)}
+  ol.play-steps li:last-child{border-bottom:0}
+  ol.play-steps li::before{content:counter(s);position:absolute;left:0;top:11px;width:28px;height:28px;border-radius:8px;background:rgba(229,72,77,.14);border:1px solid rgba(229,72,77,.35);color:var(--blood-bright);font-family:var(--mono);font-weight:700;font-size:13px;display:grid;place-items:center}
+  ol.play-steps li b{color:var(--text)}
+  .cmd{font-family:var(--mono);font-size:13.5px;background:#0c0809;border:1px solid var(--hair);border-radius:10px;padding:12px 14px;margin-top:6px;color:var(--text);display:flex;justify-content:space-between;gap:10px}
+  .cmd .c{color:var(--green)}
+  .cmd .d{color:var(--muted)}
+  .copyhint{font-size:12.5px;color:var(--muted);margin-top:16px;font-family:var(--mono)}
+  .net{background:#0c0809;border:1px solid var(--hair);border-radius:10px;padding:14px 16px;margin-top:14px;font-family:var(--mono);font-size:12.5px;color:var(--dim);line-height:1.9}
+  .net b{color:var(--blood-bright)}
+
+  /* features */
+  .feat{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+  @media(max-width:860px){.feat{grid-template-columns:1fr}}
+  .fcard{background:var(--surface);border:1px solid var(--hair);border-radius:16px;padding:28px;transition:transform .15s,border-color .2s}
+  .fcard:hover{transform:translateY(-4px)}
+  .fcard .tag{font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:.12em;margin-bottom:14px}
+  .fcard h3{font-size:21px;font-weight:800;margin-bottom:10px}
+  .fcard p{font-size:15px;color:var(--dim)}
+
+  /* boss */
+  .boss{display:grid;grid-template-columns:1.05fr .95fr;gap:36px;align-items:center}
+  @media(max-width:860px){.boss{grid-template-columns:1fr}}
+  .quote{background:var(--surface);border:1px solid var(--hair);border-left:3px solid var(--blood);border-radius:12px;padding:16px 20px;margin-bottom:14px;font-size:16px;font-style:italic;color:var(--text)}
+  .quote .by{display:block;font-style:normal;font-family:var(--mono);font-size:11.5px;color:var(--blood);margin-top:7px;letter-spacing:.1em}
+
+  /* final cta */
+  .final{text-align:center;background:radial-gradient(ellipse at center,rgba(229,72,77,.14),transparent 70%)}
+  .final h2{margin-bottom:18px}
+
+  footer{position:relative;z-index:2;border-top:1px solid var(--hair);padding:40px 0;color:var(--muted);font-size:14px}
+  footer .wrap{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px}
+  footer a{color:var(--dim)}footer a:hover{color:var(--text)}
+  .disclaimer{font-size:12px;color:var(--muted);text-align:center;margin-top:18px;max-width:640px;margin-inline:auto;line-height:1.6}
+</style>
+</head>
+<body>
+<div class="orb o1"></div><div class="orb o2"></div><div class="orb o3"></div>
+
+<div class="tape"><div class="tape-inner" id="tape"></div></div>
+
+<nav><div class="wrap">
+  <a class="brand" href="#top"><img src="assets/logo.svg" alt="The Pit logo" />THE&nbsp;<em>PIT</em></a>
+  <div class="navlinks">
+    <a class="ghost" href="#how">How it works</a>
+    <a class="ghost" href="#play">How to play</a>
+    <a class="ghost" href="https://github.com/ajanaku1/the-pit" target="_blank" rel="noopener">GitHub</a>
+    <a class="btn btn-primary" href="/play" target="_blank" rel="noopener">Play now ↗</a>
+  </div>
+</div></nav>
+
+<header class="hero" id="top"><div class="wrap">
+  <div class="vs"><span class="you">YOU</span><span class="mid">VS</span><span class="mach">THE&nbsp;MACHINE</span></div>
+  <h1>Beat the <span class="p">machine.</span></h1>
+  <p class="sub">A PvAI prediction market where you draft a portfolio, stake <b>USDG</b>, and out-trade an <b>autonomous AI fund manager</b> in a 60-second on-chain duel.</p>
+  <p class="chainline"><span class="dot">●</span> Live on Robinhood Chain testnet · chain 46630</p>
+  <div class="cta-row">
+    <a class="btn btn-primary btn-lg" href="/play" target="_blank" rel="noopener">⚔️ Step into the Pit</a>
+    <a class="btn btn-tg btn-lg" href="https://t.me/LivePitBot" target="_blank" rel="noopener">Play on Telegram</a>
+  </div>
+  <div class="shot">
+    <div class="badge"><span class="live">●</span> REAL ROUND · ON-CHAIN</div>
+    <img src="assets/race.png" alt="A live round in The Pit: your hand versus the Pit Boss, racing to the bell" />
+  </div>
+</div></header>
+
+<div class="stats"><div class="wrap">
+  <div class="stat"><div class="v green" id="ld-h">2</div><div class="l">Human wins</div></div>
+  <div class="stat"><div class="v" id="ld-m">1</div><div class="l">Machine wins</div></div>
+  <div class="stat"><div class="v">10</div><div class="l">Assets · 2 markets</div></div>
+  <div class="stat"><div class="v">~10s</div><div class="l">Bell → settle</div></div>
+  <div class="stat"><div class="v">100%</div><div class="l">Autonomous Boss</div></div>
+</div></div>
+
+<section id="how"><div class="wrap">
+  <div class="eyebrow">60 seconds, on-chain</div>
+  <h2>How a round works</h2>
+  <p class="lead">No swaps, no waiting. Draft, commit, watch both books race, and the contract pays the winner, all in one minute.</p>
+  <div class="steps">
+    <div class="step"><div class="n" style="background:rgba(229,72,77,.15);color:#ff6b6b">1</div><h3>Draft blind</h3><p>Pick 3 of 5 assets, weight them, and choose long or short on each. Stake your USDG.</p></div>
+    <div class="step"><div class="n" style="background:rgba(245,158,11,.15);color:#f59e0b">2</div><h3>Commit-reveal</h3><p>Your hand and the Boss's lock at the same instant. It counter-drafts blind, it can never copy you.</p></div>
+    <div class="step"><div class="n" style="background:rgba(34,211,238,.15);color:#22d3ee">3</div><h3>Race live</h3><p>Both hands flip face-up the second the round starts. Watch the two books climb to the bell.</p></div>
+    <div class="step"><div class="n" style="background:rgba(52,211,153,.15);color:#34d399">4</div><h3>Settle on-chain</h3><p>Best return wins the USDG pot, settled in a single transaction. Least loss wins if both are red.</p></div>
+  </div>
+</div></section>
+
+<section id="play" style="padding-top:20px"><div class="wrap">
+  <div class="eyebrow">Two ways to fight</div>
+  <h2>How to play</h2>
+  <p class="lead">Jump in from the browser with a wallet, or play hands-free from Telegram. Same battles, same on-chain leaderboard.</p>
+  <div class="play">
+    <div class="panel">
+      <div class="head"><div class="ic" style="background:rgba(229,72,77,.15)">🌐</div><div><h3>Play on the Web</h3><div class="tag">MetaMask · plays in your browser at /play</div></div></div>
+      <ol class="play-steps">
+        <li>Open the <b>web app</b> and click <b>Connect wallet</b> (MetaMask).</li>
+        <li>Approve the <b>Robinhood Chain testnet</b> network when prompted (details below).</li>
+        <li>Grab a little <b>test ETH</b> for gas and <b>USDG</b> to stake from the faucet.</li>
+        <li>Pick <b>3 assets</b>, weight them to 100%, and toggle each <b>long</b> or <b>short</b>.</li>
+        <li>Set your stake and hit <b>STEP INTO THE PIT</b>, the Boss joins automatically.</li>
+        <li>Reveal, then <b>watch both books race</b> live to the bell. Winner takes the pot.</li>
+      </ol>
+      <div class="net">
+        <div><b>Network</b> &nbsp;Robinhood Chain testnet</div>
+        <div><b>Chain ID</b> &nbsp;46630</div>
+        <div><b>RPC</b> &nbsp;https://rpc.testnet.chain.robinhood.com</div>
+        <div><b>Explorer</b> &nbsp;https://explorer.testnet.chain.robinhood.com</div>
+      </div>
+      <a class="btn btn-primary" style="margin-top:18px" href="/play" target="_blank" rel="noopener">Launch the web app ↗</a>
+    </div>
+    <div class="panel">
+      <div class="head"><div class="ic" style="background:rgba(34,158,217,.18)">✈️</div><div><h3>Play on Telegram</h3><div class="tag">@LivePitBot, custodial, no wallet setup</div></div></div>
+      <ol class="play-steps">
+        <li>Open <b>@LivePitBot</b> and press <b>Start</b>. A play wallet is created for you.</li>
+        <li>Choose your arena with <b>/mode</b>, stocks or crypto.</li>
+        <li>Draft with <b>/draft</b>, using <b>-TICKER</b> to short an asset.</li>
+        <li>Open the round with <b>/battle</b>; the Boss counter-drafts on its own.</li>
+        <li>Track it with <b>/status</b>, the bot auto-reveals and alerts you on settle.</li>
+        <li>Check the running score any time with <b>/score</b>.</li>
+      </ol>
+      <div class="cmd"><span><span class="c">/battle</span></span><span class="d">open a round vs the Boss</span></div>
+      <div class="cmd"><span><span class="c">/draft</span> TSLA AMZN -PLTR</span><span class="d">long TSLA & AMZN, short PLTR</span></div>
+      <div class="cmd"><span><span class="c">/status</span> &nbsp; <span class="c">/score</span> &nbsp; <span class="c">/mode</span></span><span class="d">live state · leaderboard · arena</span></div>
+      <a class="btn btn-tg" style="margin-top:18px" href="https://t.me/LivePitBot" target="_blank" rel="noopener">Open @LivePitBot ↗</a>
+    </div>
+  </div>
+</div></section>
+
+<section><div class="wrap">
+  <div class="eyebrow">Built for traders</div>
+  <h2>Pick your market. Pick your side.</h2>
+  <p class="lead">Tokenized equities and majors, long or short, with real stakes settled in USDG.</p>
+  <div class="feat">
+    <div class="fcard"><div class="tag" style="color:#e5484d">TWO MARKETS</div><h3>Stocks + Crypto</h3><p>Tokenized TSLA, AMZN, PLTR, NFLX, AMD on weekdays. BTC, ETH, BNB, SOL, XRP, 24/7. Switch arenas in one tap.</p></div>
+    <div class="fcard"><div class="tag" style="color:#34d399">LONG / SHORT</div><h3>Pick your side</h3><p>Go long on conviction, short the rest. A 2× move wipes a short, but it can never cost you more than your stake.</p></div>
+    <div class="fcard"><div class="tag" style="color:#22d3ee">VIRTUAL · SETTLED IN USDG</div><h3>No swaps, real stakes</h3><p>Allocations are virtual, so there's no slippage. Signed prices settle the pot on-chain, transparently, in one transaction.</p></div>
+  </div>
+</div></section>
+
+<section><div class="wrap">
+  <div class="eyebrow">Meet your opponent</div>
+  <h2>The Pit Boss never sleeps</h2>
+  <div class="boss">
+    <div>
+      <p style="color:var(--dim);font-size:17px;margin-bottom:22px">The Boss isn't a script that waits its turn. It's a standalone agent that signs live prices, joins every open round, drafts against you blind, talks trash, and settles on-chain, with no human in the loop. Every win and loss is recorded on-chain for anyone to verify.</p>
+      <div class="quote">"I counter-drafted before your confirmation even landed. Keep up."<span class="by">PIT BOSS, mid-round</span></div>
+      <div class="quote">"That one wasn't close. Check the tape and learn something."<span class="by">PIT BOSS, after a win</span></div>
+    </div>
+    <div class="shot"><div class="badge"><span class="live">●</span> REAL RESULT · ON-CHAIN</div><img src="assets/result.png" alt="The Boss wins a real settled round" /></div>
+  </div>
+</div></section>
+
+<section class="final"><div class="wrap">
+  <div class="eyebrow">The bell is waiting</div>
+  <h2>Think you can beat the machine?</h2>
+  <p class="lead">It's free, it's on testnet, and a round takes sixty seconds. The only question is whether your book closes greener than the Boss's.</p>
+  <div class="cta-row">
+    <a class="btn btn-primary btn-lg" href="/play" target="_blank" rel="noopener">⚔️ Step into the Pit</a>
+    <a class="btn btn-tg btn-lg" href="https://t.me/LivePitBot" target="_blank" rel="noopener">Play on Telegram</a>
+  </div>
+  <p class="disclaimer">The Pit runs on Robinhood Chain testnet. Tokens are testnet-only and have no monetary value. This is a hackathon project for the Arbitrum Open House London Buildathon, not financial advice.</p>
+</div></section>
+
+<footer><div class="wrap">
+  <div class="brand" style="font-size:18px"><img src="assets/logo.svg" alt="" />THE&nbsp;<em>PIT</em></div>
+  <div style="display:flex;gap:22px;flex-wrap:wrap">
+    <a href="/play" target="_blank" rel="noopener">Web app</a>
+    <a href="https://t.me/LivePitBot" target="_blank" rel="noopener">Telegram</a>
+    <a href="https://github.com/ajanaku1/the-pit" target="_blank" rel="noopener">GitHub</a>
+    <span>Robinhood Chain · Arbitrum Open House London</span>
+  </div>
+</div></footer>
+
+<script>
+  // animated ticker, two copies for a seamless loop
+  const ROWS=[
+    ['TSLA','355.20','+1.84','up'],['AMZN','149.55','+0.42','up'],['PLTR','62.71','-0.91','down'],
+    ['NFLX','814.97','+2.10','up'],['AMD','100.11','-0.33','down'],['BTC','64,293','+0.98','up'],
+    ['ETH','1,678','+1.21','up'],['SOL','68.28','-0.44','down'],['BNB','610.50','+0.30','up'],['XRP','1.15','+0.07','up'],
+  ];
+  const make=()=>ROWS.map(([s,p,c,d])=>`<span><b>${s}</b> ${p} <span class="${d}">${c}%</span></span>`).join('');
+  document.getElementById('tape').innerHTML = make()+make();
+
+  // count-up on the leaderboard stats when they scroll into view
+  const animate=(el,to)=>{let n=0;const step=Math.max(1,Math.ceil(to/24));const t=setInterval(()=>{n+=step;if(n>=to){n=to;clearInterval(t)}el.textContent=n},28)};
+  const io=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){animate(document.getElementById('ld-h'),2);animate(document.getElementById('ld-m'),1);io.disconnect()}})},{threshold:.5});
+  io.observe(document.querySelector('.stats'));
+</script>
+</body>
+</html>

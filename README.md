@@ -16,9 +16,9 @@ You draft across tokenized stocks (or crypto) and the Boss isn't a script that w
 
 ## Live Demo
 
-**https://web-eta-teal-85.vercel.app**
+**Landing:** https://web-eta-teal-85.vercel.app · **Play:** https://web-eta-teal-85.vercel.app/play
 
-Connect MetaMask to Robinhood Chain testnet (chain `46630`), draft 3 picks, and watch your book race the Boss's to the bell.
+Connect MetaMask to Robinhood Chain testnet (chain `46630`), draft 3 picks, and watch your book race the Boss's to the bell. Or play from Telegram: [@LivePitBot](https://t.me/LivePitBot).
 
 ---
 
