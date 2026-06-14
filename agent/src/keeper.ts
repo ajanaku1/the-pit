@@ -40,22 +40,26 @@ async function fetchRouterPrices(market: Market): Promise<PriceMap> {
   return prices;
 }
 
-/** Live crypto prices. KuCoin first: a no-key batch endpoint that works from
- *  datacenter IPs (Binance returns 451 there) and lists BNB (Coinbase/Kraken
- *  don't). Falls back to CoinGecko, then Binance. 18-decimal USD. */
+/** Live crypto prices. Alchemy Prices API first: a dedicated price service
+ *  (not an exchange) so it isn't geo-blocked from US datacenters the way
+ *  Binance/KuCoin are, and it covers BTC/ETH/BNB/SOL/XRP. Needs ALCHEMY_API_KEY.
+ *  Falls back to CoinGecko, then Binance. 18-decimal USD. */
 async function fetchCryptoPrices(market: Market): Promise<PriceMap> {
-  const syms = market.assets.map((a) => a.symbol);
+  const key = process.env.ALCHEMY_API_KEY;
+  if (!key) return fetchCoingeckoPrices(market);
   try {
+    const query = market.assets.map((a) => `symbols=${a.symbol}`).join("&");
     const res = await fetch(
-      `https://api.kucoin.com/api/v1/prices?base=USD&currencies=${syms.join(",")}`,
+      `https://api.g.alchemy.com/prices/v1/${key}/tokens/by-symbol?${query}`,
       { signal: AbortSignal.timeout(12_000) },
     );
-    if (!res.ok) throw new Error(`kucoin ${res.status}`);
-    const { data } = (await res.json()) as { data: Record<string, string> };
+    if (!res.ok) throw new Error(`alchemy ${res.status}`);
+    const body = (await res.json()) as { data: { symbol: string; prices: { currency: string; value: string }[] }[] };
+    const bySymbol = new Map(body.data.map((d) => [d.symbol, d.prices.find((p) => p.currency === "usd")?.value]));
     const prices: PriceMap = new Map();
     for (const asset of market.assets) {
-      const usd = data?.[asset.symbol];
-      if (usd === undefined) throw new Error(`kucoin missing ${asset.symbol}`);
+      const usd = bySymbol.get(asset.symbol);
+      if (usd === undefined) throw new Error(`alchemy missing ${asset.symbol}`);
       prices.set(asset.symbol, toWad(Number(usd)));
     }
     return prices;
