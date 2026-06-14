@@ -40,8 +40,32 @@ async function fetchRouterPrices(market: Market): Promise<PriceMap> {
   return prices;
 }
 
-/** Live crypto prices: CoinGecko first, Binance fallback. 18-decimal USD. */
+/** Live crypto prices. KuCoin first: a no-key batch endpoint that works from
+ *  datacenter IPs (Binance returns 451 there) and lists BNB (Coinbase/Kraken
+ *  don't). Falls back to CoinGecko, then Binance. 18-decimal USD. */
 async function fetchCryptoPrices(market: Market): Promise<PriceMap> {
+  const syms = market.assets.map((a) => a.symbol);
+  try {
+    const res = await fetch(
+      `https://api.kucoin.com/api/v1/prices?base=USD&currencies=${syms.join(",")}`,
+      { signal: AbortSignal.timeout(12_000) },
+    );
+    if (!res.ok) throw new Error(`kucoin ${res.status}`);
+    const { data } = (await res.json()) as { data: Record<string, string> };
+    const prices: PriceMap = new Map();
+    for (const asset of market.assets) {
+      const usd = data?.[asset.symbol];
+      if (usd === undefined) throw new Error(`kucoin missing ${asset.symbol}`);
+      prices.set(asset.symbol, toWad(Number(usd)));
+    }
+    return prices;
+  } catch {
+    return fetchCoingeckoPrices(market);
+  }
+}
+
+/** CoinGecko fallback (often rate-limited from shared datacenter IPs). */
+async function fetchCoingeckoPrices(market: Market): Promise<PriceMap> {
   const ids = market.assets.map((a) => CRYPTO_FEEDS[a.symbol].coingecko).join(",");
   try {
     const res = await fetch(
