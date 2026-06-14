@@ -38,11 +38,28 @@ type StoredRound = {
 
 const storeKey = (mode: Mode) => `pit.round.${mode}`;
 
-const TALK = {
-  live: "I counter-drafted before your confirmation even landed. Keep up.",
-  won: "Take the pot. Even a broken clock beats me twice a day, apparently.",
-  lost: "That one wasn't close. Check the tape and learn something.",
-  tie: "Dead heat. The market couldn't pick between us — flattering for you.",
+// The Boss's voice — same pools the agent taunts with, so the frontend reflects
+// its banter. Picked deterministically by round id so it's stable, not flickering.
+const BANTER = {
+  live: [
+    "Fresh meat. I've been reading tape since before you had a brokerage account.",
+    "Bold of you to stake real money on vibes. I run numbers.",
+    "I counter-drafted before your confirmation even landed. Keep up.",
+    "Your portfolio has feelings in it. Mine has math. See you at the bell.",
+    "Cute picks, probably. Mine are hidden too. Difference is, mine are right.",
+  ],
+  bossWon: [
+    "Pot's mine. Tell your friends, I need the volume.",
+    "That one wasn't close. Check the tape and learn something.",
+    "The machine eats again. Rack 'em up whenever you're ready.",
+    "I'd say good game, but only one of us was playing one.",
+  ],
+  bossLost: [
+    "Take the pot. Even a broken clock beats me twice a day, apparently.",
+    "Enjoy it. Variance is loud, edge is quiet. I'll see you in the long run.",
+    "You caught a move I didn't. Won't happen twice.",
+  ],
+  tie: ["Dead heat. The market couldn't pick between us. Flattering for you."],
 };
 
 function loadStored(mode: Mode): StoredRound | null {
@@ -64,11 +81,13 @@ function retClass(value: bigint): string {
   return value >= 10n ** 18n ? "up" : "dn";
 }
 
-function bossLine(phase: string, yours: bigint, his: bigint): string {
-  if (phase !== "settled") return TALK.live;
-  if (yours > his) return TALK.won;
-  if (yours < his) return TALK.lost;
-  return TALK.tie;
+function bossLine(phase: string, yours: bigint, his: bigint, roundId: bigint): string {
+  const seed = Number(roundId % 1000n);
+  const from = (pool: string[]) => pool[seed % pool.length];
+  if (phase !== "settled") return from(BANTER.live);
+  if (yours > his) return from(BANTER.bossLost); // you beat the Boss
+  if (yours < his) return from(BANTER.bossWon);  // the Boss beat you
+  return from(BANTER.tie);
 }
 
 /** Adapt decimals to magnitude: BTC ($63,664) vs XRP ($1.13). */
@@ -124,7 +143,31 @@ export default function App() {
       await client.switchChain({ id: robinhoodTestnet.id }).catch(() => undefined);
     }
     setWallet(address);
+    localStorage.setItem("pit:connected", "1");
   }
+
+  function disconnect() {
+    setWallet(null);
+    localStorage.removeItem("pit:connected");
+  }
+
+  // Restore the connection on refresh (eth_accounts is silent — no popup) and
+  // react to account changes / disconnects from the wallet UI.
+  useEffect(() => {
+    const provider = getInjectedProvider();
+    if (!provider) return;
+    if (localStorage.getItem("pit:connected") === "1") {
+      makeWalletClient(provider).getAddresses()
+        .then(([addr]) => { if (addr) setWallet(addr); })
+        .catch(() => undefined);
+    }
+    const onAccounts = (accounts: string[]) => {
+      if (accounts.length === 0) { setWallet(null); localStorage.removeItem("pit:connected"); }
+      else { setWallet(accounts[0] as Address); localStorage.setItem("pit:connected", "1"); }
+    };
+    provider.on?.("accountsChanged", onAccounts);
+    return () => provider.removeListener?.("accountsChanged", onAccounts);
+  }, []);
 
   function togglePick(idx: number) {
     setDraft((prev) => {
@@ -384,7 +427,7 @@ export default function App() {
       <div className="tape"><div className="tape-inner">{[0, 1].map(tapeRun)}</div></div>
 
       <header>
-        <div className="logo"><img src={`${import.meta.env.BASE_URL}logo.svg`} alt="" className="logomark" />THE <em>PIT</em></div>
+        <a className="logo" href="/" title="Back to home"><img src={`${import.meta.env.BASE_URL}logo.svg`} alt="" className="logomark" />THE <em>PIT</em></a>
         <div className="modeswitch">
           {(Object.keys(MARKETS) as Mode[]).map((key) => (
             <button
@@ -399,7 +442,7 @@ export default function App() {
         <div className="record">
           Humans {score.humans} — <b>{score.machine}</b> Machine · {score.draws} draw{score.draws === 1 ? "" : "s"}
           {wallet
-            ? <span className="addr">{wallet.slice(0, 6)}…{wallet.slice(-4)}</span>
+            ? <button className="addr" onClick={disconnect} title="Disconnect wallet">{wallet.slice(0, 6)}…{wallet.slice(-4)} ⏻</button>
             : <button className="chip" onClick={() => void connect()}>Connect wallet</button>}
         </div>
       </header>
@@ -470,7 +513,7 @@ export default function App() {
                 {whyLine && <div className="result-why">{whyLine}</div>}
               </div>
             )}
-            <div className="talkline"><b>PIT BOSS</b>&nbsp; “{bossLine(phase, yourReturn, bossReturn)}”</div>
+            <div className="talkline"><b>PIT BOSS</b>&nbsp; “{bossLine(phase, yourReturn, bossReturn, round?.id ?? 0n)}”</div>
             {settling && (
               <div className="settling-banner">
                 <span className="dots"><span /><span /><span /></span>

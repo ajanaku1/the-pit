@@ -49,7 +49,8 @@ header { display: flex; justify-content: space-between; align-items: center; gap
 .modebtn.on .hrs { color: rgba(255,255,255,0.75); }
 .record { font-size: 13px; color: var(--dim); letter-spacing: 0.05em; text-transform: uppercase; display: flex; align-items: center; gap: 16px; }
 .record b { color: var(--gold); }
-.addr { color: var(--text); font-family: ui-monospace, Menlo, monospace; text-transform: none; }
+.addr { color: var(--text); font-family: ui-monospace, Menlo, monospace; text-transform: none; background: transparent; border: 1px solid transparent; border-radius: 8px; padding: 4px 8px; cursor: pointer; font-size: inherit; }
+.addr:hover { border-color: var(--hair); color: var(--blood); }
 
 main { max-width: 980px; margin: 0 auto; padding: 24px 24px 120px; }
 
