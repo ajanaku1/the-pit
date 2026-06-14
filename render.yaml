@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: the-pit-keeper
+    runtime: node
+    plan: free
+    buildCommand: npm install --include=dev --prefix agent && npm install --include=dev --prefix bot
+    startCommand: node server.mjs
+    healthCheckPath: /
+    envVars:
+      - key: FORCE_MARKET_OPEN
+        value: "true"
+      - key: ROBINHOOD_RPC
+        value: https://rpc.testnet.chain.robinhood.com
+      # Secrets — set these in the Render dashboard (sync: false = not stored in repo)
+      - key: PRIVATE_KEY
+        sync: false
+      - key: RELAY_SIGNER
+        sync: false
+      - key: BOSS_ADDRESS
+        sync: false
+      - key: PLAYER_KEY
+        sync: false
+      - key: PLAYER
+        sync: false
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false

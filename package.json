@@ -1,0 +1,11 @@
+{
+  "name": "the-pit-keeper",
+  "private": true,
+  "type": "module",
+  "description": "Render host: Pit Boss agent + Telegram bot as one always-on web service",
+  "engines": { "node": "20.x" },
+  "scripts": {
+    "build": "npm install --include=dev --prefix agent && npm install --include=dev --prefix bot",
+    "start": "node server.mjs"
+  }
+}
